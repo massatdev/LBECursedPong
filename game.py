@@ -27,13 +27,17 @@ LEVEL = 1
 curse_mngr = eldritch.CurseManager()
 
 # ambient audio
-pygame.mixer.music.load("CursedPong\\assets\\dk-fear.aif")
+pygame.mixer.music.load("assets\\dk-fear.aif")
 pygame.mixer.music.set_volume(0.5)
 pygame.mixer.music.play(-1)
 
 # curse trigger audio
-curse_trigger_sound = pygame.mixer.Sound("CursedPong\\assets\\curse_trigger.wav")
+curse_trigger_sound = pygame.mixer.Sound("assets\\curse_trigger.wav")
 curse_trigger_sound.set_volume(1)
+
+# gameover audio
+gameover_sound = pygame.mixer.Sound("assets\\game_over.mp3")
+gameover_sound.set_volume(1)
 
 # player variables
 player_width = 20
@@ -72,12 +76,20 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Cursed Pong")
 clock = pygame.time.Clock()
 
+gameover_timeout = 0
+gameover = False
 running = True
 
 while running:
+    time_curr = pygame.time.get_ticks()
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
+    if gameover and (time_curr - gameover_timeout >= 3000):
+        curse_mngr.reset()
+        running = False
 
     # curses
     player1.update_curses(curse_mngr)
@@ -132,10 +144,11 @@ while running:
         curse_trigger_sound.play()
 
     # Game Over Logic
-    if ball_x + ball_radius <= 0:
+    if ball_x + ball_radius <= 0 and not gameover:
         pygame.mixer.music.stop()
-        curse_mngr.reset()    
-        running = False
+        gameover_sound.play()
+        gameover_timeout = time_curr
+        gameover = True
 
     # Victory logic
     if LEVEL > 6:
